@@ -2,15 +2,21 @@ import { getStore } from '@netlify/blobs'
 
 // デフォルトのBlobsストア名。環境変数で上書きできる。
 const DEFAULT_STORE_NAME = 'arukamo-review-config'
+const LEGACY_STORE_NAME = 'nakotakasu-review-config'
 const memoryStore = new Map()
 
 const resolveStoreName = (name) => {
   if (name) return name
-  // 互換用: 既存のストアを参照したい場合は環境変数で上書きする
+  // 優先: 明示的な指定
   if (process.env.NETLIFY_BLOBS_STORE) return process.env.NETLIFY_BLOBS_STORE
   if (process.env.BLOBS_STORE_NAME) return process.env.BLOBS_STORE_NAME
   if (process.env.LEGACY_BLOBS_STORE_NAME) return process.env.LEGACY_BLOBS_STORE_NAME
-  return DEFAULT_STORE_NAME
+
+  // arukamo用の新デフォルト。データ移行前でも下のレガシーにフォールバック。
+  if (process.env.PREFER_ARUKAMO_STORE !== 'false') return DEFAULT_STORE_NAME
+
+  // 旧実装で利用していたストア名。既存データ参照用に最後の砦として使用。
+  return LEGACY_STORE_NAME
 }
 
 const getCredentials = () => {
